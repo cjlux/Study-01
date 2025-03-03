@@ -1,0 +1,17 @@
+[project]
+name = "study-01"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "numpy==1.26.*",
+    "jupyter>=1.1.1",
+    "notebook>=7.3.2",
+    "tensorflow==2.16.*",
+    "opencv-python==4.11.0.86",
+    "matplotlib>=3.10.0",
+    "pydot>=3.0.4",
+    "pandas>=2.2.3",
+    "scikit-learn>=1.6.1",
+]
