@@ -1,14 +1,41 @@
-# version 2.1 du 21 mai 2022
+# version 2.2 - 2025/03/06
 
 import numpy as np
 from numpy import ndarray
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
-#import pandas as pd
-#from seaborn import heatmap
-#from sklearn.metrics import confusion_matrix
-
+import pandas as pd
+from seaborn import heatmap
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 from sklearn.model_selection import train_test_split
+from time import time
+
+def elapsed_time_since(t0):
+    t = int(time()-t0)
+    h = int(t//3600)
+    m = int((t - h*3600)//60)
+    s = int((t - h*3600 -m*60))
+    return f" Elapsed time {t}s -> {h:02d}:{m:02d}:{s:02d}"
+    
+def plot_proportion_bar(proportions:dict, class_names, figsize=(6,4)):
+    '''
+    To plot propotion of classes in different datasets.
+    proportion: the dictionnary {<dataset name>: <[number of class in teh dataset]>}
+    '''
+    width = 0.35
+    coeff = 0
+    x = np.arange(len(class_names))  # the label locations on x axis
+    fig, ax = plt.subplots(figsize=figsize, layout='constrained')
+    # Add some text for labels, title and custom x-axis tick labels, etc.
+    for name, values in proportions.items():
+        offset = width * coeff
+        rects = ax.bar(x + offset, values, width, label=name)
+        ax.bar_label(rects, padding=3)
+        coeff += 1
+    ax.set_ylabel('number of digits')
+    ax.set_title('Pproportion of digits in dataset')
+    ax.set_xticks(x + width/2, class_names)
+    ax.legend()
 
 def split_stratified_into_train_val_test(dataset: (ndarray, ndarray), 
                                          frac_train:float=0.7, 
@@ -63,73 +90,90 @@ def split_stratified_into_train_val_test(dataset: (ndarray, ndarray),
 
 
 
-def plot_loss_accuracy(hist:list, min_acc=None, max_loss=None, training=True, single_color:bool = True):
-    '''Plot training & validation loss & accuracy values, giving an argument
-       'hist' of type 'tensorflow.python.keras.callbacks.History'. '''
+def plot_loss_accuracy(hist:list, 
+                       max_epoch = None,
+                       min_acc=0,  max_acc=1, min_loss=0, max_loss=1, 
+                       training=True, single_color:bool = True, single_legend:bool= True):
+    '''
+    Plot training & validation loss & accuracy values, giving an argument
+    'hist' of type 'tensorflow.python.keras.callbacks.History'. 
+    '''
     
     custom_lines = [Line2D([0], [0], color='blue', lw=1, marker='o'),
                     Line2D([0], [0], color='orange', lw=1, marker='o')]
-    val_colors = ('lightcoral', 'orange', 'gold', 'goldenrod', 'darkgoldenrod')
+    val_colors = ('orange', 'gold', 'goldenrod', 'darkgoldenrod', 'lightcoral', 'firebrick')
     
     plt.figure(figsize=(15,5))
     
     if not isinstance(hist, list): hist = [hist]
-        
+
+    if max_epoch is None:
+        epoch_array = np.array(hist[0].epoch)+1
+    else:
+        epoch_array = np.arange(1, max_epoch+1)
+    nb_epoch = len(epoch_array)
+    
     ax1 = plt.subplot(1,2,1)
     for (i, h) in enumerate(hist):
         if h.history.get('accuracy') and training:
-            ax1.plot(np.array(h.epoch)+1, h.history['accuracy'], 'o-', 
-                     markersize=1,
+            ax1.plot(epoch_array, h.history['accuracy'][:nb_epoch], 'o-', 
+                     markersize=3,
                      color='blue', label=f'train-{i:01d}')
         if h.history.get('val_accuracy'):
             if single_color:
                 val_color = 'orange'
             else:
                 val_color = val_colors[i % len(val_colors)]
-            ax1.plot(np.array(h.epoch)+1, h.history['val_accuracy'], 'o-', 
-                     markersize=1,
+            ax1.plot(epoch_array, h.history['val_accuracy'][:nb_epoch], 'o-', 
+                     markersize=3,
                      color=val_color, label=f'val-{i:01d}')
     ax1.set_title('Model accuracy')
     ax1.set_ylabel('Accuracy')
     ax1.set_xlabel('Epoch') 
-    y_min, y_max = ax1.get_ylim()
-    if min_acc is not None:
-        ax1.set_ylim((min_acc, y_max))
-    #ax1.set_xticks(np.arange(1, len(h.epoch)+1))
+    ax1.set_ylim((min_acc, max_acc))
     ax1.grid(which='major', color='xkcd:cool grey',  linestyle='-',  alpha=0.7)
     ax1.grid(which='minor', color='xkcd:light grey', linestyle='--', alpha=0.5)
-    ax1.legend()
-    #ax1.legend(custom_lines, ['Train', 'Valid'])
+    if  single_legend:
+        ax1.legend(custom_lines, ['Train', 'Valid'])
+    else:
+        ax1.legend()
+    #ax1.set_xticks(np.arange(1, len(h.epoch)+1))
+    
     
     # Plot training & validation loss values
     ax2 = plt.subplot(1,2,2)
     for (i, h) in enumerate(hist):
         if h.history.get('loss') and training:
-            ax2.plot(np.array(h.epoch)+1, h.history['loss'], 'o-',  
-                     markersize=1,
+            ax2.plot(epoch_array, h.history['loss'][:nb_epoch], 'o-',  
+                     markersize=3,
                      color='blue', label=f'train-{i:01d}')
         if h.history.get('val_loss'):
             if single_color:
                 val_color = 'orange'
             else:
                 val_color = val_colors[i % len(val_colors)]
-            ax2.plot(np.array(h.epoch)+1, h.history['val_loss'], 'o-', 
-                     markersize=1,
+            ax2.plot(epoch_array, h.history['val_loss'][:nb_epoch], 'o-', 
+                     markersize=3,
                      color=val_color, label=f'val-{i:01d}')
     ax2.set_title('Model loss')
     ax2.set_ylabel('Loss')
     ax2.set_xlabel('Epoch')
-    if max_loss is not None:
-        ax2.set_ylim((0, max_loss))
-
-    #ax2.set_xticks(np.arange(1, len(h.epoch)+1))
+    ax2.set_ylim((min_loss, max_loss))
     ax2.grid(which='major', color='xkcd:cool grey',  linestyle='-',  alpha=0.7)
     ax2.grid(which='minor', color='xkcd:light grey', linestyle='--', alpha=0.5)
-    ax2.legend()
+    if  single_legend:
+        ax2.legend(custom_lines, ['Train', 'Valid'])
+    else:
+        ax2.legend()
+    #ax2.set_xticks(np.arange(1, len(h.epoch)+1))
 
     plt.show()
 
-def plot_images(image_array:np.ndarray, R:int, C:int, r:int=0, figsize:tuple=None, reverse:bool=False):
+def plot_images(image_array:np.ndarray, 
+                R:int, C:int, r:int=0,
+                figsize:tuple=None, 
+                label_array:np.ndarray=None, 
+                reverse:bool=False):
     '''
     Plot the images from image_array on a R x C grid, starting at image rank r.
     Arguments:
@@ -138,30 +182,37 @@ def plot_images(image_array:np.ndarray, R:int, C:int, r:int=0, figsize:tuple=Non
        C: the number of columns
        r: the starting rank in the array image_array (default: 0)
        figsize: the sise of the display (default: (C//2+1, R//2+1))
+       label_array: an optional array of labels to give the imshow title
        reverse: wether to reverse video the image or not (default: False)
+       titles: an optional list of titel for each imshow
     '''
-    if figsize is None: figsize=(C//2+1, R//2+1)
-    plt.figure(figsize=figsize)
-    for i in range(R*C):
-        plt.subplot(R, C, i+1)
+    if figsize is None: figsize=(C//2+1, R//2+1 )
+    fig, axes = plt.subplots(R, C, figsize=figsize)
+    plt.subplots_adjust(top=.95, bottom=.01, hspace=.05, wspace=.3)
+    for i, ax in enumerate(axes.flatten()):
         im = image_array[r+i]
         if reverse: im = 255 - im
-        plt.imshow(im, cmap='gray')
-        plt.axis('off');
+        if label_array is not None: ax.set_title(str(label_array[r+i]), fontsize=8)
+        ax.imshow(im, cmap='gray')
+        ax.axis('off');
 
+def show_conf_matrix(actual_label, predicted_labels, classes, figsize=(8,7)):
 
-# def show_cm(true, results, classes):
-#     ''' true  : the actual labels 
-#         results : the labels computed by the trained network (one-hot format)
-#         classes : list of possible label values'''
-#     predicted = np.argmax(results, axis=-1) # tableau d'entiers entre 0 et 9 
-#     cm = confusion_matrix(true, predicted)
-#     df_cm = pd.DataFrame(cm, index=classes, columns=classes)
-#     plt.figure(figsize=(11,9))
-#     heatmap(df_cm, annot=True, cbar=False, fmt="3d")
-#     plt.xlabel('predicted label')
-#     plt.ylabel('true label')
-#     plt.show()
+    fig  = plt.figure(figsize=figsize)
+    axis = plt.axes()
+    plt.title('Confusion Matrix', fontsize=16, pad=15)
+    plt.ylabel('True labels', fontsize=13)
+    plt.gca().xaxis.set_label_position('top') 
+    plt.xlabel('Predicted labels', fontsize=13)
+    plt.gca().xaxis.tick_top()
+    plt.gca().figure.subplots_adjust(bottom=0.2)
+    ConfusionMatrixDisplay.from_predictions(actual_label, predicted_labels, 
+                                            ax=axis,
+                                            cmap=plt.cm.Blues,
+                                            display_labels=classes, 
+                                            #xticks_rotation='vertical',
+                                            colorbar=False);
+    plt.show()
     
 def scan_dir(path):
     tree = ''
