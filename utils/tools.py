@@ -15,7 +15,7 @@ def elapsed_time_since(t0):
     h = int(t//3600)
     m = int((t - h*3600)//60)
     s = int((t - h*3600 -m*60))
-    return f" Elapsed time {t}s -> {h:02d}:{m:02d}:{s:02d}"
+    return f"Elapsed time {t}s -> {h:02d}:{m:02d}:{s:02d}"
     
 def plot_proportion_bar(proportions:dict, class_names, figsize=(6,4)):
     '''
@@ -91,9 +91,10 @@ def split_stratified_into_train_val_test(dataset: (ndarray, ndarray),
 
 
 def plot_loss_accuracy(hist:list, 
-                       max_epoch = None,
-                       min_acc=0,  max_acc=1, min_loss=0, max_loss=1, 
-                       training=True, single_color:bool = True, single_legend:bool= True):
+                       max_epoch:float = None,
+                       min_acc:float=0,  max_acc:float=1, min_loss:float=0, max_loss:float=1, 
+                       training:bool=True, 
+                       single_legend:bool= True):
     '''
     Plot training & validation loss & accuracy values, giving an argument
     'hist' of type 'tensorflow.python.keras.callbacks.History'. 
@@ -116,16 +117,11 @@ def plot_loss_accuracy(hist:list,
     ax1 = plt.subplot(1,2,1)
     for (i, h) in enumerate(hist):
         if h.history.get('accuracy') and training:
-            ax1.plot(epoch_array, h.history['accuracy'][:nb_epoch], 'o-', 
-                     markersize=3,
+            ax1.plot(epoch_array, h.history['accuracy'][:nb_epoch], 'o-', markersize=4,
                      color='blue', label=f'train-{i:01d}')
         if h.history.get('val_accuracy'):
-            if single_color:
-                val_color = 'orange'
-            else:
-                val_color = val_colors[i % len(val_colors)]
-            ax1.plot(epoch_array, h.history['val_accuracy'][:nb_epoch], 'o-', 
-                     markersize=3,
+            val_color = val_colors[i % len(val_colors)]
+            ax1.plot(epoch_array, h.history['val_accuracy'][:nb_epoch], 'o-', markersize=4,
                      color=val_color, label=f'val-{i:01d}')
     ax1.set_title('Model accuracy')
     ax1.set_ylabel('Accuracy')
@@ -134,9 +130,9 @@ def plot_loss_accuracy(hist:list,
     ax1.grid(which='major', color='xkcd:cool grey',  linestyle='-',  alpha=0.7)
     ax1.grid(which='minor', color='xkcd:light grey', linestyle='--', alpha=0.5)
     if  single_legend:
-        ax1.legend(custom_lines, ['Train', 'Valid'])
+        ax1.legend(custom_lines, ['Train', 'Valid'], loc='lower right')
     else:
-        ax1.legend()
+        ax1.legend(loc='lower right')
     #ax1.set_xticks(np.arange(1, len(h.epoch)+1))
     
     
@@ -144,16 +140,11 @@ def plot_loss_accuracy(hist:list,
     ax2 = plt.subplot(1,2,2)
     for (i, h) in enumerate(hist):
         if h.history.get('loss') and training:
-            ax2.plot(epoch_array, h.history['loss'][:nb_epoch], 'o-',  
-                     markersize=3,
+            ax2.plot(epoch_array, h.history['loss'][:nb_epoch], 'o-', markersize=4,
                      color='blue', label=f'train-{i:01d}')
         if h.history.get('val_loss'):
-            if single_color:
-                val_color = 'orange'
-            else:
-                val_color = val_colors[i % len(val_colors)]
-            ax2.plot(epoch_array, h.history['val_loss'][:nb_epoch], 'o-', 
-                     markersize=3,
+            val_color = val_colors[i % len(val_colors)]
+            ax2.plot(epoch_array, h.history['val_loss'][:nb_epoch], 'o-', markersize=4,
                      color=val_color, label=f'val-{i:01d}')
     ax2.set_title('Model loss')
     ax2.set_ylabel('Loss')
@@ -162,9 +153,9 @@ def plot_loss_accuracy(hist:list,
     ax2.grid(which='major', color='xkcd:cool grey',  linestyle='-',  alpha=0.7)
     ax2.grid(which='minor', color='xkcd:light grey', linestyle='--', alpha=0.5)
     if  single_legend:
-        ax2.legend(custom_lines, ['Train', 'Valid'])
+        ax2.legend(custom_lines, ['Train', 'Valid'], loc='upper right')
     else:
-        ax2.legend()
+        ax2.legend(loc='upper right')
     #ax2.set_xticks(np.arange(1, len(h.epoch)+1))
 
     plt.show()
