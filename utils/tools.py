@@ -17,7 +17,7 @@ def elapsed_time_since(t0):
     s = int((t - h*3600 -m*60))
     return f"Elapsed time {t}s -> {h:02d}:{m:02d}:{s:02d}"
     
-def plot_proportion_bar(proportions:dict, class_names, figsize=(6,4)):
+def plot_proportion_bar(proportions:dict, class_names, title:str, figsize:tuple=(6,4)):
     '''
     To plot propotion of classes in different datasets.
     proportion: the dictionnary {<dataset name>: <[number of class in teh dataset]>}
@@ -33,7 +33,7 @@ def plot_proportion_bar(proportions:dict, class_names, figsize=(6,4)):
         ax.bar_label(rects, padding=3)
         coeff += 1
     ax.set_ylabel('number of digits')
-    ax.set_title('Pproportion of digits in dataset')
+    ax.set_title(title)
     ax.set_xticks(x + width/2, class_names)
     ax.legend()
 
